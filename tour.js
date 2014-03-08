@@ -1,6 +1,20 @@
 /*********************************************************
  * Functions
  *********************************************************/
+ var christmas = false;
+
+ var cronJob = require('cron').CronJob;
+new cronJob('0 0 0 * * *', function(){
+	date = Date();
+	date = date.split(' ');
+	if (date[1] == 'Dec' && date[2] == '25') {
+    	christmas = true;
+    }
+    else {
+    	christmas = false;
+    }
+}, null, true);
+
 exports.tour = function(t) {
   if (typeof t != "undefined") var tour = t; else var tour = new Object();
 	var tourStuff = {
@@ -46,6 +60,7 @@ exports.tour = function(t) {
 				tier: undefined,
 				size: 0,
 				roundNum: 0,
+				usergroup: undefined,
 				players: new Array(),
 				winners: new Array(),
 				losers: new Array(),
@@ -89,7 +104,7 @@ exports.tour = function(t) {
 			}
 		},
 		maxauth: function(user) {
-			if (user.can('forcewin') || user.userid === 'slayer95' || user.userid === 'chslayer95') return true;
+			if (user.can('forcewin')) return true;
 			return false;
 		},
 		highauth: function(user) {
@@ -135,7 +150,7 @@ exports.tour = function(t) {
 				someid = trid.players[trid.players.length - 1];
 				var listnames = prelistnames + ' and <b>' + tour.username(someid) + '</b>';
 				room.addRaw(listnames + ' have joined the tournament.' + tour.remsg(remslots));
-
+				
 				trid.playerslogged.push(trid.players[trid.playerslogged.length]);
 				for (var i = trid.playerslogged.length; i < trid.players.length - 1; i++) { //the length is disturbed by the push above
 					trid.playerslogged.push(trid.players[i]);
@@ -162,7 +177,7 @@ exports.tour = function(t) {
 						if (players[i] == toId(j)) return false;
 					}
 				}
-				for (var i=0; i<players.length; i++) {
+				for (var i=0; i<players.length; i++) {	
 					for (var j=0; j<Users.get(uid).getAlts().length; j++) {
 						for (var k in Users.get(Users.get(uid).getAlts()[j]).prevNames) {
 							if (players[i] == toId(k)) return false;
@@ -178,7 +193,9 @@ exports.tour = function(t) {
 				if couldn't disqualify return false
 				if could disqualify return the opponents userid
 			*/
+			var loser = "";
 			var r = tour[rid].round;
+			var tier = toUserid(Tools.data.Formats[tour[rid].tier].name);
 			for (var i in r) {
 				if (r[i][0] == uid) {
 					var key = i;
@@ -212,7 +229,15 @@ exports.tour = function(t) {
 				r[key][2] = r[key][winner];
 				tour[rid].winners.push(r[key][winner]);
 				tour[rid].losers.push(r[key][loser]);
+				loser = r[key][loser];
 				tour[rid].history.push(r[key][winner] + "|" + r[key][loser]);
+				if (tour[rid].size >= 8) {
+					try {
+						frostcommands.addTourLoss(loser, tier); //for recording tour stats
+					} catch (e) {
+						console.log('Error recording tournament loss: '+e.stack);
+					}
+				}
 				return r[key][winner];
 			}
 		},
@@ -300,26 +325,37 @@ exports.tour = function(t) {
 				var tourMoney = 0;
 				var tooSmall = '';
 				var p = 'bucks';
-				if (!Rooms.rooms[rid].auth) {
-					if (tour[rid].size >= 16) {
+				if (Rooms.rooms[rid].isOfficial || Rooms.rooms[rid].id == 'infinite') {
+					if (tour[rid].size >= 32) {
 						tourMoney = 3;
 					}
-					if (tour[rid].size >= 8 && tour[rid].size < 16) {
+					if (tour[rid].size >= 16 && tour[rid].size < 32) {
 						tourMoney = 2;
 					}
-					if (tour[rid].size < 8 && tour[rid].size >= 4) {
+					if (tour[rid].size < 16 && tour[rid].size >= 8) {
 						tourMoney = 1;
 						p = 'buck';
 					}
-					if (tour[rid].size < 4) {
+					if (tour[rid].size < 8) {
 						tourMoney = 0;
 						tooSmall = tooSmall + '(the tour was too small)';
+					}
+					if (christmas) {
+						tourMoney = tourMoney * 2;
+						tooSmall = '(Prizes are doubled due to christmas!)';
 					}
 				} else {
 					tooSmall += '(this is not an official chatroom)';
 				}
 				//end tour
-				Rooms.rooms[rid].addRaw('<h2><font color="green">Congratulations <font color="black">' + Users.users[w[0]].name + '</font>!  You have won the ' + Tools.data.Formats[tour[rid].tier].name + ' Tournament!<br>You have also won ' + tourMoney + ' Kill The Noise ' + p + '! ' + tooSmall + '</font></h2>' + '<br><font color="blue"><b>SECOND PLACE:</b></font> ' + Users.users[l[0]].name + '<hr />');
+				Rooms.rooms[rid].addRaw('<h2><font color="green">Congratulations <font color="black">' + Users.users[w[0]].name + '</font>!  You have won the ' + Tools.data.Formats[tour[rid].tier].name + ' Tournament!<br>You have also won ' + tourMoney + ' Frost ' + p + '! ' + tooSmall + '</font></h2>' + '<br><font color="blue"><b>SECOND PLACE:</b></font> ' + Users.users[l[0]].name + '<hr />');			
+				if (tour[rid].size >= 8) {
+					try {
+						frostcommands.addTourWin(Users.users[w[0]].name, Tools.data.Formats[tour[rid].tier].name); //for recording tour stats
+						} catch (e) {
+						console.log('Error recording tournament win: '+e.stack);
+					}
+				}
 				//for now, this is the only way to get points/money
 				var data = fs.readFileSync('config/money.csv','utf8')
 				var match = false;
@@ -358,6 +394,7 @@ exports.tour = function(t) {
 					log.write("\n"+Users.users[w[0]].userid+','+Users.users[w[0]].money);
 				}
 				tour[rid].status = 0;
+				if (tourMoney > 0) fs.appendFile('logs/transactions.log','\n'+Date()+': '+Users.users[w[0]].name+' has won '+tourMoney+' '+p+' from a tournament in '+Rooms.rooms[rid].title+'. They now have '+Users.users[w[0]].money);	
 			} else {
 				var html = '<hr /><h3><font color="green">Round '+ tour[rid].roundNum +'!</font></h3><font color="blue"><b>TIER:</b></font> ' + Tools.data.Formats[tour[rid].tier].name + "<hr /><center>";
 				var pBye = new Array();
@@ -445,52 +482,10 @@ var cmds = {
 		}
 		if (Rooms.global.addChatRoom(target)) {
 			tour.reset(id);
+			hangman.reset(id);
 			return this.sendReply("The room '"+target+"' was created.");
 		}
 		return this.sendReply("An error occurred while trying to create the room '"+target+"'.");
-	},
-
-	hotpatch: function(target, room, user) {
-		if (!target) return this.parse('/help hotpatch');
-		if (!user.can('hotpatch') && user.userid != 'slayer95') return false;
-
-		this.logEntry(user.name + ' used /hotpatch ' + target);
-
-		if (target === 'chat') {
-			try {
-				CommandParser.uncacheTree('./command-parser.js');
-				CommandParser = require('./command-parser.js');
-				CommandParser.uncacheTree('./tour.js');
-				tour = require('./tour.js').tour(tour);
-				return this.sendReply('Chat commands have been hot-patched.');
-			} catch (e) {
-				return this.sendReply('Something failed while trying to hotpatch chat: \n' + e.stack);
-			}
-		} else if (target === 'battles') {
-
-			Simulator.SimulatorProcess.respawn();
-			return this.sendReply('Battles have been hotpatched. Any battles started after now will use the new code; however, in-progress battles will continue to use the old code.');
-
-		} else if (target === 'formats') {
-			try {
-				// uncache the tools.js dependency tree
-				CommandParser.uncacheTree('./tools.js');
-				// reload tools.js
-				Data = {};
-				Tools = require('./tools.js'); // note: this will lock up the server for a few seconds
-				// rebuild the formats list
-				Rooms.global.formatListText = Rooms.global.getFormatListText();
-				// respawn simulator processes
-				Simulator.SimulatorProcess.respawn();
-				// broadcast the new formats list to clients
-				Rooms.global.send(Rooms.global.formatListText);
-
-				return this.sendReply('Formats have been hotpatched.');
-			} catch (e) {
-				return this.sendReply('Something failed while trying to hotpatch formats: \n' + e.stack);
-			}
-		}
-		this.sendReply('Your hot-patch command was unrecognized.');
 	},
 
 	//tour commands
@@ -579,7 +574,8 @@ var cmds = {
 		if (!target) return this.sendReply('Proper syntax for this command: /tourtime time');
 		target = parseInt(target);
 		if (isNaN(target)) return this.sendReply('Proper syntax for this command: /tourtime time');
-		if (target < 1) return this.sendReply('That is not a valid reschedule.');
+		if (target === 0) return this.sendReply('You cannot set the tour time to 0.');
+		if (target < 0) return this.sendReply('Why would you want to reschedule a tournament for the past?');
 		target = Math.ceil(target);
 		tour.timers[room.id].time = target;
 		tour.timers[room.id].startTime = tour.currentSeconds;
@@ -602,14 +598,14 @@ var cmds = {
 			// these three assignments (natural, natural, boolean) are done as wished
 			if (isFinite(tour[room.id].size)) {
 			var pplogmarg = Math.ceil(Math.sqrt(tour[room.id].size) / 2);
-			var logperiod = Math.ceil(Math.sqrt(tour[room.id].size));
+			var logperiod = Math.ceil(Math.sqrt(tour[room.id].size));	
 			} else {
 			var pplogmarg = (!isNaN(config.tourtimemargin) ? config.tourtimemargin : 3);
 			var logperiod = (config.tourtimeperiod ? config.tourtimeperiod : 4);
 			}
 			var perplayerlog = ( ( tour[room.id].players.length <= pplogmarg ) || ( remslots + 1 <= pplogmarg ) );
 			//
-
+			
 			if (perplayerlog || (tour[room.id].players.length - tour[room.id].playerslogged.length >= logperiod) || ( remslots <= pplogmarg ) ) {
 				tour.reportdue(room, connection);
 			} else {
@@ -623,7 +619,7 @@ var cmds = {
 
 	forcejoin: 'fj',
 	fj: function(target, room, user, connection) {
-		if (!tour.lowauth(user,room)) return this.sendReply('You do not have enough authority to use this command.');
+		if (!user.can('mute')) return this.sendReply('You do not have enough authority to use this command.');
 		if (room.decision) return this.sendReply('Prof. Oak: There is a time and place for everything! You cannot do this in battle rooms.');
 		if (tour[room.id] == undefined || tour[room.id].status == 0 || tour[room.id].status == 2) return this.sendReply('There is no tournament in a sign-up phase.');
 		if (!target) return this.sendReply('Please specify a user who you\'d like to participate.');
@@ -650,6 +646,7 @@ var cmds = {
 	l: function(target, room, user, connection) {
 		if (room.decision) return this.sendReply('Prof. Oak: There is a time and place for everything! You cannot do this in battle rooms.');
 		if (tour[room.id] == undefined || tour[room.id].status == 0) return this.sendReply('There is no active tournament to leave.');
+		if (tour[room.id].status == 2 && tour[room.id].roundNum == 1) return this.sendReply('You can\'t leave a tournament in the first round, ask a staff member to replace you.');
 		if (tour[room.id].status == 1) {
 			var index = tour[room.id].players.indexOf(user.userid);
 			if (index !== -1) {
@@ -686,7 +683,7 @@ var cmds = {
 
 	forceleave: 'fl',
 	fl: function(target, room, user, connection) {
-		if (!tour.lowauth(user,room)) return this.sendReply('You do not have enough authority to use this command.');
+		if (!user.can('mute')) return this.sendReply('You do not have enough authority to use this command.');
 		if (room.decision) return this.sendReply('Prof. Oak: There is a time and place for everything! You cannot do this in battle rooms.');
 		if (tour[room.id] == undefined || tour[room.id].status == 0 || tour[room.id].status == 2) return this.sendReply('There is no tournament in a sign-up phase.  Use /dq username if you wish to remove someone in an active tournament.');
 		if (!target) return this.sendReply('Please specify a user to kick from this signup.');
@@ -715,8 +712,13 @@ var cmds = {
 		if (tour[room.id].status == 1) {
 			var remslots = tour[room.id].size - tour[room.id].players.length;
 			tour.reportdue(room, connection);
-			room.addRaw('<hr /><h2><font color="green">Please sign up for the ' + Tools.data.Formats[tour[room.id].tier].name + ' Tournament.</font> <font color="red">/j</font> <font color="green">to join!</font></h2><b><font color="blueviolet">PLAYERS:</font></b> ' + (isFinite(tour[room.id].size) ? tour[room.id].size : 'UNLIMITED') + '<br /><font color="blue"><b>TIER:</b></font> ' + Tools.data.Formats[tour[room.id].tier].name + '<hr />');
+			room.addRaw('<hr /><h2><font color="green">Please sign up for the ' + Tools.data.Formats[tour[room.id].tier].name + ' Tournament.</font> <font color="red">/j</font> <font color="green">to join!</font></h2><b><font color="blueviolet">PLAYERS:</font></b> ' + (isFinite(tour[room.id].size) ? tour[room.id].size : 'UNLIMITED') + '<br /><font color="blue"><b>TIER:</b></font> ' + Tools.data.Formats[tour[room.id].tier].name + '<br /><font color="gray"><i>Tour remind by '+user.name+'</i></font><br /><hr />');
 		} else {
+			if (tour[room.id].remindCooldown) return this.sendReply('/remind is currently on cooldown. You can only use /remind once per minute.');
+			tour[room.id].remindCooldown = true;
+			tour[room.id].remindCooldownTimer = setTimeout(function(){
+				tour[room.id].remindCooldown = false;
+			}, 1 * 60 * 1000);
 			var c = tour[room.id];
 			var unfound = [];
 			if (!target) {
@@ -764,82 +766,106 @@ var cmds = {
 					}
 				}
 			}
-			room.addRaw("Users with pending battles in the tournament were reminded of it by " + user.name);
+			room.addRaw("Users with pending battles in the tournament were reminded of it by " + user.name + '.');
 			if (unfound.length) return this.sendReply("The following users are offline or lack pending battles: " + unfound.toString());
 		}
 	},
-
-	viewround: 'vr',
-	viewreport: 'vr',
-	vr: function(target, room, user, connection) {
-		if (!tour[room.id].status) {
-			if (!this.canBroadcast()) return;
-			var oghtml = "<hr /><h2>Tournaments In Their Signup Phase:</h2>";
-			var html = oghtml;
-			for (var i in tour) {
-				var c = tour[i];
-				if (typeof c == "object") {
-					if (c.status == 1) html += '<button name="joinRoom" value="' + i + '">' + Rooms.rooms[i].title + ' - ' + Tools.data.Formats[c.tier].name + '</button> ';
-				}
+	
+	viewround: function(target, room, user, connection) {
+		if (!this.canBroadcast()) return;
+		if (room.decision) return this.sendReply('Prof. Oak: There is a time and place for everything! You cannot do this in battle rooms.');
+		if (tour[room.id] == undefined) return this.sendReply('There is no active tournament in this room.');
+		if (tour[room.id].status < 2) return this.sendReply('There is no tournament out of its signup phase.');
+		var html = '<hr /><h3><font color="green">Round '+ tour[room.id].roundNum + '!</font></h3><font color="blue"><b>TIER:</b></font> ' + Tools.data.Formats[tour[room.id].tier].name + "<hr /><center><small><font color=red>Red</font> = lost, <font color=green>Green</font> = won, <a class='ilink'><b>URL</b></a> = battling</small><center>";
+		var r = tour[room.id].round;
+		var firstMatch = false;
+		for (var i in r) {
+			if (!r[i][1]) {
+				//bye
+				var byer = tour.username(r[i][0]);
+				html += "<font color=\"red\">" + clean(byer) + " has received a bye.</font><br />";
 			}
-			if (html == oghtml) html += "There are currently no tournaments in their signup phase.";
-			this.sendReply('|raw|' + html + "<hr />");
-		} else if (tour[room.id].status == 1) {
-			if (!tour.lowauth(user,room)) return this.sendReply('You should not use this command during the sign-up phase.');
-			tour.reportdue(room, connection);
-		} else {
-			if (!this.canBroadcast()) return;
-			if (room.decision) return this.sendReply('Prof. Oak: There is a time and place for everything! You cannot do this in battle rooms.');
-			if (tour[room.id] == undefined) return this.sendReply('There is no active tournament in this room.');
-			if (tour[room.id].status < 2) return this.sendReply('There is no tournament out of its signup phase.');
-			var html = '<hr /><h3><font color="green">Round '+ tour[room.id].roundNum + '!</font></h3><font color="blue"><b>TIER:</b></font> ' + Tools.data.Formats[tour[room.id].tier].name + "<hr /><center><small><font color=red>Red</font> = lost, <font color=green>Green</font> = won, <a class='ilink'><b>URL</b></a> = battling</small><center>";
-			var r = tour[room.id].round;
-			var firstMatch = false;
-			for (var i in r) {
-				if (!r[i][1]) {
-					//bye
-					var byer = tour.username(r[i][0]);
-					html += "<font color=\"red\">" + clean(byer) + " has received a bye.</font><br />";
+			else {
+				if (r[i][2] == undefined) {
+					//haven't started
+					var p1n = tour.username(r[i][0]);
+					var p2n = tour.username(r[i][1]);
+					if (p1n.substr(0, 6) === 'Guest ') p1n = r[i][0];
+					if (p2n.substr(0, 6) === 'Guest ') p2n = r[i][1];
+					var tabla = "";if (!firstMatch) {var tabla = "</center><table align=center cellpadding=0 cellspacing=0>";firstMatch = true;}
+					html += tabla + "<tr><td align=right>" + clean(p1n) + "</td><td>&nbsp;VS&nbsp;</td><td>" + clean(p2n) + "</td></tr>";
+				}
+				else if (r[i][2] == -1) {
+					//currently battling
+					var p1n = tour.username(r[i][0]);
+					var p2n = tour.username(r[i][1]);
+					if (p1n.substr(0, 6) === 'Guest ') p1n = r[i][0];
+					if (p2n.substr(0, 6) === 'Guest ') p2n = r[i][1];
+					var tabla = "";if (!firstMatch) {var tabla = "</center><table align=center cellpadding=0 cellspacing=0>";firstMatch = true;}
+					var tourbattle = tour[room.id].battles[i];
+					function link(txt) {return "<a href='/" + tourbattle + "' room='" + tourbattle + "' class='ilink'>" + txt + "</a>";}
+					html += tabla + "<tr><td align=right><b>" + link(clean(p1n)) + "</b></td><td><b>&nbsp;" + link("VS") + "&nbsp;</b></td><td><b>" + link(clean(p2n)) + "</b></td></tr>";
 				}
 				else {
-					if (r[i][2] == undefined) {
-						//haven't started
-						var p1n = tour.username(r[i][0]);
-						var p2n = tour.username(r[i][1]);
-						if (p1n.substr(0, 6) === 'Guest ') p1n = r[i][0];
-						if (p2n.substr(0, 6) === 'Guest ') p2n = r[i][1];
-						var tabla = "";if (!firstMatch) {var tabla = "</center><table align=center cellpadding=0 cellspacing=0>";firstMatch = true;}
-						html += tabla + "<tr><td align=right>" + clean(p1n) + "</td><td>&nbsp;VS&nbsp;</td><td>" + clean(p2n) + "</td></tr>";
+					//match completed
+					var p1 = "red";
+					var p2 = "green";
+					if (r[i][2] == r[i][0]) {
+						p1 = "green";
+						p2 = "red";
 					}
-					else if (r[i][2] == -1) {
-						//currently battling
-						var p1n = tour.username(r[i][0]);
-						var p2n = tour.username(r[i][1]);
-						if (p1n.substr(0, 6) === 'Guest ') p1n = r[i][0];
-						if (p2n.substr(0, 6) === 'Guest ') p2n = r[i][1];
-						var tabla = "";if (!firstMatch) {var tabla = "</center><table align=center cellpadding=0 cellspacing=0>";firstMatch = true;}
-						var tourbattle = tour[room.id].battles[i];
-						function link(txt) {return "<a href='/" + tourbattle + "' room='" + tourbattle + "' class='ilink'>" + txt + "</a>";}
-						html += tabla + "<tr><td align=right><b>" + link(clean(p1n)) + "</b></td><td><b>&nbsp;" + link("VS") + "&nbsp;</b></td><td><b>" + link(clean(p2n)) + "</b></td></tr>";
-					}
-					else {
-						//match completed
-						var p1 = "red";
-						var p2 = "green";
-						if (r[i][2] == r[i][0]) {
-							p1 = "green";
-							p2 = "red";
-						}
-						var p1n = tour.username(r[i][0]);
-						var p2n = tour.username(r[i][1]);
-						if (p1n.substr(0, 6) === 'Guest ') p1n = r[i][0];
-						if (p2n.substr(0, 6) === 'Guest ') p2n = r[i][1];
-						var tabla = "";if (!firstMatch) {var tabla = "</center><table align=center cellpadding=0 cellspacing=0>";firstMatch = true;}
-						html += tabla + "<tr><td align=right><b><font color=\"" + p1 + "\">" + clean(p1n) + "</font></b></td><td><b>&nbsp;VS&nbsp;</b></td><td><font color=\"" + p2 + "\"><b>" + clean(p2n) + "</b></font></td></tr>";
-					}
+					var p1n = tour.username(r[i][0]);
+					var p2n = tour.username(r[i][1]);
+					if (p1n.substr(0, 6) === 'Guest ') p1n = r[i][0];
+					if (p2n.substr(0, 6) === 'Guest ') p2n = r[i][1];
+					var tabla = "";if (!firstMatch) {var tabla = "</center><table align=center cellpadding=0 cellspacing=0>";firstMatch = true;}
+					html += tabla + "<tr><td align=right><b><font color=\"" + p1 + "\">" + clean(p1n) + "</font></b></td><td><b>&nbsp;VS&nbsp;</b></td><td><font color=\"" + p2 + "\"><b>" + clean(p2n) + "</b></font></td></tr>";
 				}
 			}
-			this.sendReply("|raw|" + html + "</table>");
+		}
+		this.sendReply("|raw|" + html + "</table>");
+	},
+
+	viewreport: 'vr',
+	vr: function(target, room, user) {
+		if (!tour[room.id].status) {
+			if (this.broadcasting) {
+				return this.parse('!tours');
+			} else {
+				return this.parse('/tours');
+			}
+		} else if (tour[room.id].status == 1) {
+			if (tour.status != 0) return this.sendReply('You should not use this command during the sign-up phase.');
+			var remslots = tour[room.id].size - tour[room.id].players.length;
+			if (tour[room.id].players.length == tour[room.id].playerslogged.length) {
+				if (!this.broadcasting) return this.sendReply('There is nothing to report.');
+			} else if (tour[room.id].players.length == tour[room.id].playerslogged.length + 1) {
+				var someid = tour[room.id].players[tour[room.id].playerslogged.length];
+				room.addRaw('<b>' + tour.username(someid) + '</b> has joined the tournament. <b><i>' + remslots + ' slot' + ( remslots == 1 ? '' : 's') + ' remaining.</b></i>');
+				tour[room.id].playerslogged.push(tour[room.id].players[tour[room.id].playerslogged.length]);
+			} else {
+				var someid = tour[room.id].players[tour[room.id].playerslogged.length];
+				var prelistnames = '<b>' + tour.username(someid) + '</b>';
+				for (var i = tour[room.id].playerslogged.length + 1; i < tour[room.id].players.length - 1; i++) {
+					someid = tour[room.id].players[i];
+					prelistnames = prelistnames + ', <b>' + tour.username(someid) + '</b>';
+				}
+				someid = tour[room.id].players[tour[room.id].players.length - 1];
+				var listnames = prelistnames + ' and <b>' + tour.username(someid) + '</b>';
+				room.addRaw(listnames + ' have joined the tournament. <b><i>' + remslots + ' slot' + ( remslots == 1 ? '' : 's') + ' remaining.</b></i>');
+
+				tour[room.id].playerslogged.push(tour[room.id].players[tour[room.id].playerslogged.length]);
+				for (var i = tour[room.id].playerslogged.length; i < tour[room.id].players.length - 1; i++) { //the length is disturbed by the push above
+					tour[room.id].playerslogged.push(tour[room.id].players[i]);
+				}
+				tour[room.id].playerslogged.push(tour[room.id].players[tour[room.id].players.length - 1]);
+			}
+		} else {
+			if (this.broadcasting) {
+				return this.parse('!viewround');
+			} else {
+				return this.parse('/viewround');
+			}
 		}
 	},
 
@@ -895,7 +921,7 @@ var cmds = {
 		if (!target) return this.sendReply('Proper syntax for this command is: /replace user1, user2.  User 2 will replace User 1 in the current tournament.');
 		var t = tour.splint(target);
 		if (!t[1]) return this.sendReply('Proper syntax for this command is: /replace user1, user2.  User 2 will replace User 1 in the current tournament.');
-		var userOne = Users.get(t[0]);
+		var userOne = Users.get(t[0]); 
 		var userTwo = Users.get(t[1]);
 		if (!userTwo) {
 			return this.sendReply('Proper syntax for this command is: /replace user1, user2.  The user you specified to be placed in the tournament is not present!');
@@ -985,14 +1011,14 @@ var cmds = {
 	},
 
 	tourbats: function(target, room, user) {
-		if (!tour[room.id].status) return this.sendReply('There is no active tournament in this room.');
+		if (!tour[room.id].status) return this.sendReply('There is no active tournament in this room.');	
 		if (target == 'all') {
 			if (tour[room.id].battlesended.length == 0) return this.sendReply('No finished tournament battle is registered.');
 			var msg = new Array();
 			for (var i=0; i<tour[room.id].battlesended.length; i++) {
 				msg[i] = "<a href='/" + tour[room.id].battlesended[i] + "' class='ilink'>" + tour[room.id].battlesended[i].match(/\d+$/) + "</a>";
 			}
-			return this.sendReplyBox(msg.toString());
+			return this.sendReplyBox(msg.toString());			
 		} else if (target == 'invtie') {
 			if (!tour[room.id].status) return this.sendReply('There is no active tournament in this room.');
 			if (tour[room.id].battlesinvtie.length == 0) return this.sendReply('No battle in this tournament has ended in a tie or been invalidated.');
@@ -1002,23 +1028,56 @@ var cmds = {
 			}
 			return this.sendReplyBox(msg.toString());
 		} else {
-			return this.sendReply('Use either "/tourbats all" or "/tourbats invtie"');
+			return this.sendReply('Use either "/tourbats all" or "/tourbats invite"');
 		}
 	},
 
 	toursettings: function(target, room, user) {
 		if (!tour.maxauth(user)) return this.sendReply('You do not have enough authority to use this command.');
-		if (target === 'replace on') return config.tourunlimitreplace = true;
-		if (target === 'replace off') return config.tourunlimitreplace = false;
-		if (target === 'alts on') return config.tourallowalts = true;
-		if (target === 'alts off') return config.tourallowalts = false;
-		if (target === 'dq on') return config.tourdqguard = false;
-		if (target === 'dq off') return config.tourdqguard = true;
-		if ((target.substr(0,6) === 'margin') && !isNaN(parseInt(target.substr(7))) && parseInt(target.substr(7)) >= 0) return config.tourtimemargin = parseInt(target.substr(7));
-		if ((target.substr(0,6) === 'period') && !isNaN(parseInt(target.substr(7))) && parseInt(target.substr(7)) > 0) return config.tourtimeperiod = parseInt(target.substr(7));
-		if (target.substr(0,7) === 'lowauth' && config.groupsranking.indexOf(target.substr(8,1)) != -1) return config.tourlowauth = target.substr(8,1);
-		if (target.substr(0,7) === 'midauth' && config.groupsranking.indexOf(target.substr(8,1)) != -1) return config.tourmidauth = target.substr(8,1);
-		if (target.substr(0,8) === 'highauth' && config.groupsranking.indexOf(target.substr(9,1)) != -1) return config.tourhighauth = target.substr(9,1);
+		if (target === 'replace on') {
+			config.tourunlimitreplace = true;
+			return this.sendReply('Replacing past round one has been enabled.');
+		}
+		if (target === 'replace off') {
+			config.tourunlimitreplace = false;
+			return this.sendReply('Replacing past round one has been disabled.');
+		}
+		if (target === 'alts on') { 
+			config.tourallowalts = true;
+			return this.sendReply('Alts are now allowed to join tournaments.');
+		}
+		if (target === 'alts off') { 
+			config.tourallowalts = false;
+			return this.sendReply('Alts are no longer allowed to join tournaments.');
+		}
+		if (target === 'dq on') {
+			config.tourdqguard = false;
+			return;
+		}
+		if (target === 'dq off') {
+			config.tourdqguard = true;
+			return;
+		}
+		if ((target.substr(0,6) === 'margin') && !isNaN(parseInt(target.substr(7))) && parseInt(target.substr(7)) >= 0) {
+			config.tourtimemargin = parseInt(target.substr(7));
+			return this.sendReply('In tournaments with timed register phase, the players joined are now logged individually until '+config.tourtimemargin+'players have joined.');
+		}
+		if ((target.substr(0,6) === 'period') && !isNaN(parseInt(target.substr(7))) && parseInt(target.substr(7)) > 0) {
+			config.tourtimeperiod = parseInt(target.substr(7));
+			return this.sendReply('In tournaments with timed register phase, the players joined are now logged in groups of '+config.tourtimeperiod+' players.');
+		}
+		if (target.substr(0,7) === 'lowauth' && config.groupsranking.indexOf(target.substr(8,1)) != -1) {
+			config.tourlowauth = target.substr(8,1);
+			return this.sendReply('Tournament low auth has been set to '+config.tourlowauth);
+		}
+		if (target.substr(0,7) === 'midauth' && config.groupsranking.indexOf(target.substr(8,1)) != -1) {
+			config.tourmidauth = target.substr(8,1);
+			return this.sendReply('Tournament mid auth has been set to '+config.tourmidauth);
+		}
+		if (target.substr(0,8) === 'highauth' && config.groupsranking.indexOf(target.substr(9,1)) != -1) {
+			config.tourhighauth = target.substr(9,1);
+			return this.sendReply('Tournament high auth has been set to '+config.tourhighauth);
+		}
 		if (target === 'view' || target === 'show' || target === 'display') {
 			var msg = '';
 			msg = msg + 'Can players be replaced after the first round? ' + new Boolean(config.tourunlimitreplace) + '.<br>';
@@ -1037,72 +1096,82 @@ var cmds = {
 		if (!this.canBroadcast()) return;
 		this.sendReplyBox("Click <a href='http://elloworld.dyndns.org/documentation.html'>here</a> to be taken to the documentation for the tournament commands.");
 	},
-
+	
 	survey: 'poll',
-	poll: function (target, room, user) {
-		if (!tour.lowauth(user, room)) return this.sendReply('You do not have enough authority to use this command.');
-		if (!tour[room.id]) tour.reset(room.id);
+	poll: function(target, room, user) {
+		if (!tour.lowauth(user,room)) return this.sendReply('You do not have enough authority to use this command.');
 		if (tour[room.id].question) return this.sendReply('There is currently a poll going on already.');
 		var separacion = "&nbsp;&nbsp;";
 		var answers = tour.splint(target);
+		formats = ''; 
+		for (var u in Tools.data.Formats) {
+			if (Tools.data.Formats[u].name && Tools.data.Formats[u].challengeShow) formats = formats+','+Tools.data.Formats[u].name;
+		}
+		formats = 'Tournament'+formats;
+		if (answers[0] == 'tournament' || answers[0] == 'tour') answers = tour.splint(formats);
 		if (answers.length < 3) return this.sendReply('Correct syntax for this command is /poll question, option, option...');
 		var question = answers[0];
 		answers.splice(0, 1);
 		var answers = answers.join(',').toLowerCase().split(',');
 		tour[room.id].question = question;
 		tour[room.id].answerList = answers;
+		tour[room.id].usergroup = config.groupsranking.indexOf(user.group);
 		room.addRaw('<div class="infobox"><h2>' + tour[room.id].question + separacion + '<font size=2 color = "#939393"><small>/vote OPTION<br /><i><font size=1>Poll started by '+user.name+'</font size></i></small></font></h2><hr />' + separacion + separacion + " &bull; " + tour[room.id].answerList.join(' &bull; ') + '</div>');
 	},
-
+	
 	vote: function(target, room, user) {
 		var ips = JSON.stringify(user.ips);
 		if (!tour[room.id].question) return this.sendReply('There is no poll currently going on in this room.');
+		if (!target) return this.parse('/help vote');
 		if (tour[room.id].answerList.indexOf(target.toLowerCase()) == -1) return this.sendReply('\'' + target + '\' is not an option for the current poll.');
 		tour[room.id].answers[ips] = target.toLowerCase();
 		return this.sendReply('You are now voting for ' + target + '.');
 	},
-
+	
 	votes: function(target, room, user) {
 		if (!this.canBroadcast()) return;
 		this.sendReply('NUMBER OF VOTES: ' + Object.keys(tour[room.id].answers).length);
 	},
-
+	
 	endsurvey: 'endpoll',
 	ep: 'endpoll',
-	endpoll: function (target, room, user) {
-		if (!tour.lowauth(user, room)) return this.sendReply('You do not have enough authority to use this command.');
-		if (!tour[room.id] || !tour[room.id].question) return this.sendReply('There is no poll to end in this room.');
+	endpoll: function(target, room, user) {
+		if (!tour.lowauth(user,room)) return this.sendReply('You do not have enough authority to use this command.');
+		if (!tour[room.id].question) return this.sendReply('There is no poll to end in this room.');
+		if (tour[room.id].usergroup > config.groupsranking.indexOf(user.group)) return this.sendReply('You cannot end this poll as it was started by a user of higher auth than you.');
 		var votes = Object.keys(tour[room.id].answers).length;
-		if (votes == 0) return room.addRaw("<h3>The poll was canceled because of lack of voters.</h3>");
+		if (votes == 0) {
+			tour[room.id].question = undefined;
+			tour[room.id].answerList = new Array();
+			tour[room.id].answers = new Object();
+			return room.addRaw("<h3>The poll was canceled because of lack of voters.</h3>");			
+		}
 		var options = new Object();
 		var obj = tour[room.id];
 		for (var i in obj.answerList) options[obj.answerList[i]] = 0;
 		for (var i in obj.answers) options[obj.answers[i]]++;
 		var sortable = new Array();
 		for (var i in options) sortable.push([i, options[i]]);
-		sortable.sort(function (a, b) {
-			return a[1] - b[1]
-		});
+		sortable.sort(function(a, b) {return a[1] - b[1]});
 		var html = "";
 		for (var i = sortable.length - 1; i > -1; i--) {
-			console.log(i);
+			//console.log(i);
 			var option = sortable[i][0];
 			var value = sortable[i][1];
-			html += "&bull; " + option + " - " + Math.floor(value / votes * 100) + "% (" + value + ")<br />";
+			if (value > 0) html += "&bull; " + option + " - " + Math.floor(value / votes * 100) + "% (" + value + ")<br />";
 		}
-		room.addRaw('<div class="infobox"><h2>Results to "' + obj.question + '"<br /><i><font size=1>Poll ended by '+user.name+'</font size></i></h2><hr />' + html + '</div>');
-		tour[room.id].question = undefined;
+		room.addRaw('<div class="infobox"><h2>Results to "' + obj.question + '"<br /><i><font size=1 color = "#939393">Poll ended by '+user.name+'</font></i></h2><hr />' + html + '</div>');		tour[room.id].question = undefined;
 		tour[room.id].answerList = new Array();
 		tour[room.id].answers = new Object();
 	},
-
+	
 	pollremind: 'pr',
 	pr: function(target, room, user) {
 		var separacion = "&nbsp;&nbsp;";
 		if (!tour[room.id].question) return this.sendReply('There is currently no poll going on.');
 		if (!this.canBroadcast()) return;
-		this.sendReply('|raw|<div class="infobox"><h2>' + tour[room.id].question + separacion + '<font class="closebutton" size=1><small>/vote OPTION</small></font></h2><hr />' + separacion + separacion + " &bull; " + tour[room.id].answerList.join(' &bull; ') + '</div>');
-	}
+		this.sendReply('|raw|<div class="infobox"><h2>' + tour[room.id].question + separacion + '<font font size=1 color = "#939393"><small>/vote OPTION</small></font></h2><hr />' + separacion + separacion + " &bull; " + tour[room.id].answerList.join(' &bull; ') + '</div>');
+	},
 };
 
 for (var i in cmds) CommandParser.commands[i] = cmds[i];
@@ -1189,7 +1258,7 @@ Rooms.BattleRoom.prototype.joinBattle = function(user, team) {
 			return;
 		}
 	}
-
+	
 	if (this.tournament) {
 		if (this.p1.userid === user.userid) {
 			slot = 0;
@@ -1199,7 +1268,7 @@ Rooms.BattleRoom.prototype.joinBattle = function(user, team) {
 			return;
 		}
 	}
-
+	
 	this.battle.join(user, slot, team);
 	Rooms.global.battleCount += (this.battle.active?1:0) - (this.active?1:0);
 	this.active = this.battle.active;
@@ -1208,7 +1277,7 @@ Rooms.BattleRoom.prototype.joinBattle = function(user, team) {
 		this.send('|title|'+this.title);
 	}
 	this.update();
-
+	
 	if (this.parentid) {
 		Rooms.get(this.parentid).updateRooms();
 	}
