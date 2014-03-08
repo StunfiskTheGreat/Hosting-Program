@@ -368,6 +368,8 @@ global.CommandParser = require('./command-parser.js');
 
 global.Simulator = require('./simulator.js');
 
+global.tour = require('./tour.js').tour();
+
 
 try {
 	global.Dnsbl = require('./dnsbl.js');
