@@ -426,8 +426,8 @@ exports.tour = function(t) {
 	};
 
 	for (var i in tourStuff) tour[i] = tourStuff[i];
-	for (var i in Tools.data.Rulesets) {
-			if (Tools.data.Formats[i].effectType == 'Format' && Tools.data.Formats[i].challengeShow) {
+	for (var i in tools.data.Rulesets) {
+			if (tools.data.Formats[i].effectType == 'Format' && Tools.data.Formats[i].challengeShow) {
 				tour.tiers.push(i);
 			}
 	}
