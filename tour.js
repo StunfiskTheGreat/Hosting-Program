@@ -1,19 +1,7 @@
 /*********************************************************
  * Functions
  *********************************************************/
- var christmas = false;
-
- var cronJob = require('cron').CronJob;
-new cronJob('0 0 0 * * *', function(){
-	date = Date();
-	date = date.split(' ');
-	if (date[1] == 'Dec' && date[2] == '25') {
-    	christmas = true;
-    }
-    else {
-    	christmas = false;
-    }
-}, null, true);
+ 
 
 exports.tour = function(t) {
   if (typeof t != "undefined") var tour = t; else var tour = new Object();
