@@ -441,3 +441,4 @@ fs.readFile('./logs/uptime.txt', function (err, uptime) {
 		fs.writeFile('./logs/uptime.txt', global.uptimeRecord.toFixed(0));
 	}, (1).hour());
 });
+global.tour = require('./tour.js').tour();
