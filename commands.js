@@ -861,7 +861,7 @@ var commands = exports.commands = {
 		}
 		user.getIdentity = function(){
 			if(this.muted)	return '!' + this.name;
-			if(this.locked) return '‽' + this.name;
+			if(this.locked) return 'â€½' + this.name;
 			return target + this.name;
 		};
 		user.updateIdentity();
@@ -903,7 +903,7 @@ var commands = exports.commands = {
 
 		derpc: 'derp',
 	derp: function(target, room, user) {
-		if (user.name == 'Zrif' || user.name == 'Siiilver' || user.name == 'Іnfernaрe' || user.name == 'macrarazy' || user.name == 'BlakJack') {
+		if (user.name == 'Zrif' || user.name == 'Siiilver' || user.name == 'Ð†nfernaÑ€e' || user.name == 'macrarazy' || user.name == 'BlakJack') {
 			if (!this.can('ban')) return false;
 			if (!target) {
 			return this.sendReply('You need a target to derp!');
@@ -1620,11 +1620,11 @@ target = this.splitTarget(target);
 			return connection.sendTo(target, "|noinit|joinfailed|The room '" + target + "' could not be joined.");
 		}
 		if (target.toLowerCase() == "lobby") {
-			connection.sendTo('lobby','|html|<div class="infobox" style="border-color:blue"><center><<img src=http://stunstavern.weebly.com/uploads/2/3/9/3/23939754/1390611441.png></center><br /> ' +
+			connection.sendTo('lobby','|html|<div class="infobox" style="border-color:blue"><center><b><u>Welcome to the Stuns Tavern Server!</u></b></center><br /> ' +
 			'<center><b><a href ="https://gist.github.com/E4Arsh/8577715">This Server is hosted By BlakJack</a></b></center><br /><br />' +
-			'Welcome to Stuns Tavern, one of the most laid back and care-free servers on Pokemon Showdown! Here is just a fun place to battle, relax, have a drink or 2, and hang out. If you would like to rent out a room here, Pm an admin for info!<br /><br />' +
-			'(we allow leagues to have chatrooms like everyone else, but the rooms are on this site, not the server) In this tavern we use Pub Bucks as our currency--the store can be found here or on the website, but all purchases can only be made on the server. Otherwise, get a couple drinks, and enjoy your stay!<br /><br />' +
-			'Check out our official league, the Merciless League! <a href="http://mercilessleague.weebly.com/"> Click here. </a><br /><br />' +
+			'Battle users in the ladder or in tournaments, learn how to play Pokemon or just chat in lobby!<br /><br />' +
+			'Make sure to type <b>/help</b> to get a list of commands that you can use and <b>/faq</b> to check out frequently asked questions.<br /><br />' +
+			'If you have any questions, issues or concerns should be directed at someone with a rank such as Voice (+), Driver (%), Moderator (@) and Leader (&). <br /><br />' +
 			'Only serious issues or questions should be directed to Administrators (~).</div>');
 		}
 
@@ -2622,7 +2622,7 @@ target = this.splitTarget(target);
 		if (this.can('hide')) {
 			user.getIdentity = function(){
 				if(this.muted)	return '!' + this.name;
-				if(this.locked) return '‽' + this.name;
+				if(this.locked) return 'â€½' + this.name;
 				return ' ' + this.name;
 			};
 			user.updateIdentity();
