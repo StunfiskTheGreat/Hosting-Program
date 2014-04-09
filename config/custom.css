@@ -1,4 +1,160 @@
-#header{background:url("http://www.math.toronto.edu/~drorbn/Gallery/Symmetry/Tilings/So/WineBottles.jpg")}
-
-body{background-image:url("http://www.globallygorgeous.com/wp-content/uploads/2011/07/Bar-web.jpg");background-repeat:no-repeat;background-position:center}
+#header {background:url("http://pokemonshowdown.com/interstice?uri=http%3A%2F%2Fetc-mysitemyway.s3.amazonaws.com%2Fwebtreats%2Fassets%2Fposts%2F973%2Ffull%2Ftileable-dark-wood-textures-8.jpg");background-repeat}
+ 
+body{background-image:url("http://mercilessleague.weebly.com/uploads/2/3/9/3/23939754/866845321.jpg");background-repeat:background-position:center;}
+ 
+.chat-log{font-size:16pt;background: url("http://pokewalls.files.wordpress.com/2011/05/249lugia1600x1200.jpg") no-repeat center;overflow:auto;}
+ 
+ 
+ 
+.menugroup {
+color: red;
+}
+ 
+.button:hover{background:#40FF00;}
+ 
+.userlist {
+background: url("http://etc-mysitemyway.s3.amazonaws.com/webtreats/assets/posts/973/full/tileable-dark-wood-textures-8.jpg");
+ 
+}
+ 
+ 
+ 
+.userlist li {
+border-bottom: 1px solid #00FFFF;
+height: 19px;
+font: 10pt Verdana, sans-serif;
+white-space: nowrap;
+}
+ 
+.menugroup {
+background:#A9F5F2;
+text-align: center;
+border-color: #40FF00;
+}
+ 
+ 
+.tabbar a.button: {
+background: url("http://mercilessleague.weebly.com/uploads/2/3/9/3/23939754/1392322111.png")
+color:white;
+}
+ 
+.tabbar a.button.cur, .tabbar a.button.cur:hover {
+background: url("http://mercilessleague.weebly.com/uploads/2/3/9/3/23939754/1392322111.png")
+color:white;
+border-bottom: 0;
+cursor: default;
+padding-top: 3px;
+padding-bottom: 5px;
+top: 0px;
+}
+ 
+.maintabbarbottom {
+background:#A9F5F2;
+border-color: #40FF00;
+}
+.ps-room.ps-room-opaque {
+    background: #333;
+    color: black;
+}
+ 
+.ps-room {
+    position: absolute;
+    display: block;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid #333;
+        border-top: none;
+}
+ 
+.ps-room .battle{
+        top: 60px;
+        border-width: 0px;
+}
+ 
+.foehint{    
+position: relative;
+top: 45px;
+}        
+       
+.battle {
+    border: 0px solid #AAAAAA;
+    width: 640px;
+    height: 360px;
+    overflow: visible;
+    font-family: Verdana, sans-serif;
+    font-size: 10pt;
+}
+   
+.backdrop {
+    width: 640px;
+    height: 360px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    overflow: hidden;
+    background: -50px -90px;
+    opacity: 1 !important;
+}
+ 
+.backdrop:after{
+        display: block;
+        content: "";
+        background: url(http://i.imgur.com/zQ6bUvr.png);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 640px;
+    height: 360px;
+}
+ 
+.ps-room .battle-controls {
+top: 430px;
+}
+ 
+ 
+ 
+ 
+.battle-log {
+position: absolute;
+text-align: left;
+background: url(http://pokewalls.files.wordpress.com/2012/04/581swanna1600x1200.jpg) repeat-y center scroll;
+color:white
+top: 9px;
+left: 640px;
+right: -1px;
+height: 360px;
+font-family: Cambria (Headings);
+font-size: 10pt;
+}
+ 
+.chat-log-add {
+background:#A9F5F2;
+color:#A9F5F2;
+border-color: #40FF00;
+}
+ 
+         
+.battle-log-add {
+position: absolute;
+background: url(http://www.hdwallcloud.com/wp-content/uploads/2013/09/Ios-7-Wallpapers.jpg) repeat-x left top;
+bottom: 0px;
+color:#0000FF;
+}        
+ 
+.battle-log .chat strong
+{
+        color:white;
+}
+.battle-log .chat em
+{
+        padding: 1px 4px 1px 3px;
+        color:white;
+        font-style: normal;
+}
+.battle-log .chat em.mine
+{
+        color:white;
+}
 
