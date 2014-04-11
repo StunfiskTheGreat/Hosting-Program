@@ -1,10 +1,6 @@
-#header {background:url("http://pokemonshowdown.com/interstice?uri=http%3A%2F%2Fetc-mysitemyway.s3.amazonaws.com%2Fwebtreats%2Fassets%2Fposts%2F973%2Ffull%2Ftileable-dark-wood-textures-8.jpg");background-repeat}
+#header {background:url ("http://etc-mysitemyway.s3.amazonaws.com/webtreats/assets/posts/973/full/tileable-dark-wood-textures-8.jpg");background-repeat}
  
 body{background-image:url("http://mercilessleague.weebly.com/uploads/2/3/9/3/23939754/866845321.jpg");background-repeat:background-position:center;}
- 
-.chat-log{font-size:16pt;background: url("http://pokewalls.files.wordpress.com/2011/05/249lugia1600x1200.jpg") no-repeat center;overflow:auto;}
- 
- 
  
 .menugroup {
 color: red;
@@ -17,8 +13,6 @@ background: url("http://etc-mysitemyway.s3.amazonaws.com/webtreats/assets/posts/
  
 }
  
- 
- 
 .userlist li {
 border-bottom: 1px solid #00FFFF;
 height: 19px;
@@ -27,7 +21,7 @@ white-space: nowrap;
 }
  
 .menugroup {
-background:#A9F5F2;
+background:red;
 text-align: center;
 border-color: #40FF00;
 }
@@ -48,10 +42,6 @@ padding-bottom: 5px;
 top: 0px;
 }
  
-.maintabbarbottom {
-background:#A9F5F2;
-border-color: #40FF00;
-}
 .ps-room.ps-room-opaque {
     background: #333;
     color: black;
@@ -119,7 +109,7 @@ top: 430px;
 .battle-log {
 position: absolute;
 text-align: left;
-background: url(http://pokewalls.files.wordpress.com/2012/04/581swanna1600x1200.jpg) repeat-y center scroll;
+background: url() repeat-y center scroll;
 color:white
 top: 9px;
 left: 640px;
@@ -128,13 +118,7 @@ height: 360px;
 font-family: Cambria (Headings);
 font-size: 10pt;
 }
- 
-.chat-log-add {
-background:#A9F5F2;
-color:#A9F5F2;
-border-color: #40FF00;
-}
- 
+
          
 .battle-log-add {
 position: absolute;
